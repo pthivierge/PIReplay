@@ -14,6 +14,8 @@ namespace PIReplayLib
 {
     public class PIReader
     {
+
+        private readonly log4net.ILog _logger = log4net.LogManager.GetLogger(typeof(PIReader));
         private PIReplayer _replayer;
 
         //private Timer _timer;
@@ -57,7 +59,7 @@ namespace PIReplayLib
 
         public void GetPages(bool initial = false)
         {
-            Logger.Write(string.Format("Entering {0}.{1}", MethodBase.GetCurrentMethod().DeclaringType.Name, MethodBase.GetCurrentMethod().Name));
+            _logger.Info(string.Format("Entering {0}.{1}", MethodBase.GetCurrentMethod().DeclaringType.Name, MethodBase.GetCurrentMethod().Name));
             GetPages(_queue.LatestTime.LocalTime, initial);
         }
 
@@ -65,7 +67,7 @@ namespace PIReplayLib
         //{
         //    _timer.Stop();
 
-        //    Logger.Write(string.Format("Timer called GetPages at {0}", e.SignalTime));
+        //    _logger.Info(string.Format("Timer called GetPages at {0}", e.SignalTime));
 
         //    DateTime signalTime = e.SignalTime;
         //    DateTime currTime = signalTime.Truncate(TimeSpan.FromSeconds(1));
@@ -85,7 +87,7 @@ namespace PIReplayLib
             DateTime historicalStartTime = startTime.AddYears(-1);
             DateTime historicalEndTime = historicalStartTime.AddMinutes(addMinutes);
 
-            Logger.Write(string.Format("Getting page for {0} - {1}", 
+            _logger.Info(string.Format("Getting page for {0} - {1}", 
                 historicalStartTime.AddYears(1), historicalEndTime.AddYears(1)));
 
             AFTimeRange timeRange = new AFTimeRange(new AFTime(historicalStartTime), new AFTime(historicalEndTime));
@@ -115,7 +117,7 @@ namespace PIReplayLib
                 .ToList();
 
             _queue.Add(records);
-            Logger.Write(string.Format("Added {0} records", records.Count));
+            _logger.Info(string.Format("Added {0} records", records.Count));
         }
     }
 }

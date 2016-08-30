@@ -14,17 +14,19 @@ namespace PIReplayConsole
 {
     class Program
     {
+
+        private static readonly log4net.ILog _logger = log4net.LogManager.GetLogger(typeof(Program));
         static void Main(string[] args)
         {
-            Logger.ConfigureLogging();
 
+            _logger.Info("Application starting");
+            
             PIReplayer replayer = new PIReplayer();
             replayer.Start();
 
             Console.WriteLine("Press any key to quit");
             Console.ReadKey();
-
-            Logger.Close();
+            
         }
     }
 }

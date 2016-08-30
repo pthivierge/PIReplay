@@ -12,6 +12,8 @@ namespace PIReplayLib
 {
     public class DataQueue
     {
+
+        private readonly log4net.ILog _logger = log4net.LogManager.GetLogger(typeof(DataQueue));
         private ConcurrentQueue<DataRecord> _queue;
 
         public int Count { get { return _queue.Count; } }
@@ -29,7 +31,7 @@ namespace PIReplayLib
 
         public void Add(IList<DataRecord> records)
         {
-            Logger.Write(string.Format("Entering {0}.{1}", MethodBase.GetCurrentMethod().DeclaringType.Name, MethodBase.GetCurrentMethod().Name));
+            _logger.Info(string.Format("Entering {0}.{1}", MethodBase.GetCurrentMethod().DeclaringType.Name, MethodBase.GetCurrentMethod().Name));
             foreach (var rec in records)
             {
                 _queue.Enqueue(rec);
@@ -39,12 +41,12 @@ namespace PIReplayLib
                 }
 
             }
-            Logger.Write(string.Format("Queue synced to {0}", LatestTime));
+            _logger.Info(string.Format("Queue synced to {0}", LatestTime));
         }
 
         public IList<DataRecord> RemoveAtAndBefore(AFTime syncTime)
         {
-            Logger.Write(string.Format("Entering {0}.{1}", MethodBase.GetCurrentMethod().DeclaringType.Name, MethodBase.GetCurrentMethod().Name));
+            _logger.Info(string.Format("Entering {0}.{1}", MethodBase.GetCurrentMethod().DeclaringType.Name, MethodBase.GetCurrentMethod().Name));
             List<DataRecord> returnedRecs = new List<DataRecord>();
 
             AFTime pointerRecTime = AFTime.MinValue;

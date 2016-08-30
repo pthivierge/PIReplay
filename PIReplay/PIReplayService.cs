@@ -14,6 +14,8 @@ namespace PIReplay
 {
     public partial class PIReplayService : ServiceBase
     {
+        private readonly log4net.ILog _logger = log4net.LogManager.GetLogger(typeof(PIReplayService));
+
         public PIReplayService()
         {
             InitializeComponent();
@@ -28,9 +30,11 @@ namespace PIReplay
 
         protected override void OnStart(string[] args)
         {
-            Logger.ConfigureLogging();
+            _logger.Info("Service starting...");
             PIReplayer replayer = new PIReplayer();
             replayer.Start();
+            _logger.Info("Service started...");
+
         }
 
         public void ConsoleStop()
@@ -40,7 +44,7 @@ namespace PIReplay
 
         protected override void OnStop()
         {
-            Logger.Close();
+            
         }
     }
 }

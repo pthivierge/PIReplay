@@ -20,6 +20,8 @@ namespace PIReplayLib
     /// </summary>
     public class PIReplayer
     {
+
+        private readonly log4net.ILog _logger = log4net.LogManager.GetLogger(typeof(PIReplayer));
         private PIServer _sourceServer;
         private PIPointList _sourcePoints;
 
@@ -45,10 +47,10 @@ namespace PIReplayLib
             }
             catch (PIConnectionException ex)
             {
-                Logger.Write(ex.ToString());
+                _logger.Info(ex.ToString());
             }
 
-            Logger.Write("Loading points");
+            _logger.Info("Loading points");
 
             _sourcePoints = new PIPointList(PIPoint.FindPIPoints(
                 piServer: _sourceServer,
@@ -61,7 +63,7 @@ namespace PIReplayLib
                 sourceFilter: ConfigurationManager.AppSettings["destPS"])
                 );
 
-            Logger.Write(string.Format("Done loading {0} points", _sourcePoints.Count));
+            _logger.Info(string.Format("Done loading {0} points", _sourcePoints.Count));
 
             // The PIReader passes the data to the PIWriter via the DataQueue.
             DataQueue queue = new DataQueue();
@@ -73,7 +75,7 @@ namespace PIReplayLib
         {
             _writer.Start();
 
-            Logger.Write("Started reader and writer");
+            _logger.Info("Started reader and writer");
         }
 
         public void RequestFill(bool initial = false)

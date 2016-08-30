@@ -9,6 +9,7 @@ namespace PIReplayLib
 {
     public static class Utils
     {
+
         /// <summary>
         /// Get the milliseconds to the next trigger time. 
         /// For example, if period = 5 seconds, we want the trigger times to be at 0, 5, 10, etc. seconds past the minute. 
@@ -39,9 +40,9 @@ namespace PIReplayLib
             return dateTime.AddTicks(-(dateTime.Ticks % timeSpan.Ticks));
         }
 
-        public static IEnumerable<T> Do<T>(this IEnumerable<T> seq, Action<string> Logger, string message)
+        public static IEnumerable<T> Do<T>(this IEnumerable<T> seq, Action<string> logger, string message)
         {
-            Logger(message);
+            logger(message);
             return seq;
         }
     }

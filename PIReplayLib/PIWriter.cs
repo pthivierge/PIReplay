@@ -16,6 +16,9 @@ namespace PIReplayLib
 {
     public class PIWriter
     {
+
+        private readonly log4net.ILog _logger = log4net.LogManager.GetLogger(typeof(PIWriter));
+
         private PIReplayer _replayer;
 
         private System.Timers.Timer _timer;
@@ -82,7 +85,7 @@ namespace PIReplayLib
         /// <param name="e"></param>
         private void WriteValues(object sender, ElapsedEventArgs e)
         {
-            Logger.Write(string.Format("Current queue count: {0}", _queue.Count));
+            _logger.Info(string.Format("Current queue count: {0}", _queue.Count));
             _timer.Stop();       
 
             // If data queue running low, request another fill.
@@ -92,7 +95,7 @@ namespace PIReplayLib
                 {
                     if (_requestFill.IsCanceled || _requestFill.IsFaulted)
                     {
-                        Logger.Write("Cancelled or faulted");
+                        _logger.Info("Cancelled or faulted");
                     }
                     _requestFill = Task.Run(() => _replayer.RequestFill());
                 }          
@@ -103,12 +106,12 @@ namespace PIReplayLib
             // Remove all records at and before the timer trigger (signal) time.
             IList<DataRecord> records = _queue.RemoveAtAndBefore(syncTime);
 
-            Logger.Write(string.Format("Removed {0} records", records.Count));
+            _logger.Info(string.Format("Removed {0} records", records.Count));
 
             if (records.Count == 0)
             {
                 _timer.Interval = Utils.FindInterval(_period);
-                Logger.Write(string.Format("Next call in {0}", _timer.Interval));
+                _logger.Info(string.Format("Next call in {0}", _timer.Interval));
                 _timer.Start();
                 return;
             }
@@ -136,7 +139,7 @@ namespace PIReplayLib
                 {
                     foreach (var kvp in errors.Errors.Take(1))
                     {
-                        Logger.Write(string.Format("Attr: {0}, Ex: {1}",
+                        _logger.Info(string.Format("Attr: {0}, Ex: {1}",
                             kvp.Key.Attribute.GetPath(), kvp.Value.Message));
                     }
                 }
@@ -146,10 +149,10 @@ namespace PIReplayLib
                 }
                 Thread.Sleep(500);
             }
-            Logger.Write(string.Format("Updated {0} tags", updated));
+            _logger.Info(string.Format("Updated {0} tags", updated));
 
             _timer.Interval = Utils.FindInterval(_period);
-            Logger.Write(string.Format("Next call in {0}", _timer.Interval));
+            _logger.Info(string.Format("Next call in {0}", _timer.Interval));
             _timer.Start();
         }
     }
