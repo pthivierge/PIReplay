@@ -55,17 +55,9 @@ namespace PIReplayLib
             _destServer = dserver;
             _destPoints = dpoints;
 
-            //_timer = new Timer();
-            //_timer.Elapsed += GetPages;
-            //_timer.Interval = Utils.FindInterval(_period);
 
             _queue = queue;
         }
-
-        //public void Start()
-        //{
-        //    _timer.Start();
-        //}
 
         public void GetPages(bool initial = false)
         {
@@ -74,21 +66,7 @@ namespace PIReplayLib
             GetPages(_queue.LatestTime.LocalTime, initial);
         }
 
-        //private void GetPages(object sender, ElapsedEventArgs e)
-        //{
-        //    _timer.Stop();
 
-        //    _logger.Info(string.Format("Timer called GetPages at {0}", e.SignalTime));
-
-        //    DateTime signalTime = e.SignalTime;
-        //    DateTime currTime = signalTime.Truncate(TimeSpan.FromSeconds(1));
-        //    DateTime requestStartTime = currTime.AddYears(-1);
-
-        //    GetPages(requestStartTime);
-
-        //    _timer.Interval = Utils.FindInterval(_period);
-        //    _timer.Start();
-        //}
 
         private void GetPages(DateTime startTime, bool initial = false)
         {

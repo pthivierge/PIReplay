@@ -42,32 +42,36 @@ namespace PIReplayLib
         {
             try
             {
+                _logger.Info("Connecting to Server");
+
                 _sourceServer = new PIServers()[ConfigurationManager.AppSettings["sourceServer"]];
                 _sourceServer.Connect();
-
-                _destServer = new PIServers()[ConfigurationManager.AppSettings["destServer"]];
-                _destServer.Connect();
+                
             }
             catch (PIConnectionException ex)
             {
-                _logger.Info(ex.ToString());
+                _logger.Error(ex.ToString());
             }
 
             _logger.Info("Loading points");
 
+
+            var sourcePs = ConfigurationManager.AppSettings["sourcePS"];
             _sourcePoints =
-                new PIPointList(PIPoint.FindPIPoints(_sourceServer, ConfigurationManager.AppSettings["sourceNameFilter"],
-                    ConfigurationManager.AppSettings["sourcePS"])
-                    );
-            _destPoints =
-                new PIPointList(PIPoint.FindPIPoints(_destServer, ConfigurationManager.AppSettings["destNameFilter"],
-                    ConfigurationManager.AppSettings["destPS"])
-                    );
+                new PIPointList(PIPoint.FindPIPoints(_sourceServer, ConfigurationManager.AppSettings["sourceNameFilter"]));
+
+            _logger.InfoFormat("Loaded {0} points with point source {1}",_sourcePoints.Count, sourcePs);
+
+            //_destPoints =
+            //    new PIPointList(PIPoint.FindPIPoints(_destServer, ConfigurationManager.AppSettings["destNameFilter"],
+            //        ["destPS"])
+            //        );
 
             _logger.Info(string.Format("Done loading {0} points", _sourcePoints.Count));
 
             // The PIReader passes the data to the PIWriter via the DataQueue.
             var queue = new DataQueue();
+
             _reader = new PIReader(this, _sourceServer, _sourcePoints, _destServer, _destPoints, queue);
             _writer = new PIWriter(this, _sourceServer, _sourcePoints, _destServer, _destPoints, queue);
         }

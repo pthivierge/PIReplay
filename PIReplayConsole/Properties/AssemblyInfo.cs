@@ -29,7 +29,7 @@ using log4net.Config;
 [assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
-[assembly: XmlConfigurator(ConfigFile = "log4net.config.xml", Watch = true)]
+[assembly: XmlConfigurator(ConfigFile = "log4net.cfg.xml", Watch = true)]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
 // to COM components.  If you need to access a type in this assembly from 

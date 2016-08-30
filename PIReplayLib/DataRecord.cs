@@ -20,7 +20,7 @@ using OSIsoft.AF.Time;
 namespace PIReplayLib
 {
     /// <summary>
-    ///     Encapsulates all interpolated AFValue(s) of source points of interest at a specific timestamp.
+    ///     Encapsulates all AFValue(s) of source points of interest at a specific timestamp.
     /// </summary>
     public class DataRecord
     {
