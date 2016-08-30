@@ -1,26 +1,31 @@
-﻿
+﻿#region Copyright
+//  Copyright 2016 Barry Shang / Patrice Thivierge F.
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+#endregion
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Collections.Concurrent;
-using OSIsoft.AF.Time;
+using System.Collections.Generic;
 using System.Reflection;
+using log4net;
+using OSIsoft.AF.Time;
 
 namespace PIReplayLib
 {
     public class DataQueue
     {
-
-        private readonly log4net.ILog _logger = log4net.LogManager.GetLogger(typeof(DataQueue));
-        private ConcurrentQueue<DataRecord> _queue;
-
-        public int Count { get { return _queue.Count; } }
-
-        // Most recent timestamp of value in the queue.
-        // This allows PIReader to know the start time of the next query.
-        public AFTime LatestTime { get; private set; }
+        private readonly ILog _logger = LogManager.GetLogger(typeof (DataQueue));
+        private readonly ConcurrentQueue<DataRecord> _queue;
 
         public DataQueue()
         {
@@ -29,9 +34,19 @@ namespace PIReplayLib
             LatestTime = new AFTime(DateTime.Now.Truncate(TimeSpan.FromSeconds(1)));
         }
 
+        public int Count
+        {
+            get { return _queue.Count; }
+        }
+
+        // Most recent timestamp of value in the queue.
+        // This allows PIReader to know the start time of the next query.
+        public AFTime LatestTime { get; private set; }
+
         public void Add(IList<DataRecord> records)
         {
-            _logger.Info(string.Format("Entering {0}.{1}", MethodBase.GetCurrentMethod().DeclaringType.Name, MethodBase.GetCurrentMethod().Name));
+            _logger.Info(string.Format("Entering {0}.{1}", MethodBase.GetCurrentMethod().DeclaringType.Name,
+                MethodBase.GetCurrentMethod().Name));
             foreach (var rec in records)
             {
                 _queue.Enqueue(rec);
@@ -39,35 +54,35 @@ namespace PIReplayLib
                 {
                     LatestTime = rec.Time;
                 }
-
             }
             _logger.Info(string.Format("Queue synced to {0}", LatestTime));
         }
 
         public IList<DataRecord> RemoveAtAndBefore(AFTime syncTime)
         {
-            _logger.Info(string.Format("Entering {0}.{1}", MethodBase.GetCurrentMethod().DeclaringType.Name, MethodBase.GetCurrentMethod().Name));
-            List<DataRecord> returnedRecs = new List<DataRecord>();
+            _logger.Info(string.Format("Entering {0}.{1}", MethodBase.GetCurrentMethod().DeclaringType.Name,
+                MethodBase.GetCurrentMethod().Name));
+            var returnedRecs = new List<DataRecord>();
 
-            AFTime pointerRecTime = AFTime.MinValue;
-            
+            var pointerRecTime = AFTime.MinValue;
+
             while (pointerRecTime.CompareTo(syncTime) <= 0 || _queue.Count == 0)
             {
                 DataRecord rec = null;
-                bool peekResult = _queue.TryPeek(out rec);
+                var peekResult = _queue.TryPeek(out rec);
 
                 if (rec != null)
                 {
                     pointerRecTime = rec.Time;
                     if (rec.Time.CompareTo(syncTime) <= 0)
-                    {                    
+                    {
                         rec = null;
                         _queue.TryDequeue(out rec);
                         if (rec != null)
                         {
                             returnedRecs.Add(rec);
                         }
-                    }    
+                    }
                 }
                 else
                 {
@@ -77,6 +92,5 @@ namespace PIReplayLib
 
             return returnedRecs;
         }
-
     }
 }

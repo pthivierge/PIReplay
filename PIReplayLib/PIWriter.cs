@@ -1,43 +1,55 @@
-﻿using System;
+﻿#region Copyright
+//  Copyright 2016 Barry Shang / Patrice Thivierge F.
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//     http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+#endregion
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Concurrent;
 using System.Timers;
-using OSIsoft.AF;
+using log4net;
 using OSIsoft.AF.Asset;
-using OSIsoft.AF.PI;
 using OSIsoft.AF.Data;
+using OSIsoft.AF.PI;
 using OSIsoft.AF.Time;
+using Timer = System.Timers.Timer;
 
 namespace PIReplayLib
 {
     public class PIWriter
     {
+        private readonly ILog _logger = LogManager.GetLogger(typeof (PIWriter));
+        private readonly PIPointList _destPoints;
 
-        private readonly log4net.ILog _logger = log4net.LogManager.GetLogger(typeof(PIWriter));
+        private readonly PIServer _destServer;
+        private readonly double _period = 5; // in seconds
 
-        private PIReplayer _replayer;
+        private readonly DataQueue _queue;
 
-        private System.Timers.Timer _timer;
-        private double _period = 5; // in seconds
-
-        private PIServer _sourceServer;
-        private PIPointList _sourcePoints;
-
-        private PIServer _destServer;
-        private PIPointList _destPoints;
-
-        private DataQueue _queue;
+        private readonly PIReplayer _replayer;
 
         private Task _requestFill;
+        private readonly PIPointList _sourcePoints;
+
+        private PIServer _sourceServer;
 
         // Source and destination PI Points are matched simply by point name.
         private Dictionary<PIPoint, PIPoint> _sourceToDest;
 
-        public PIWriter(PIReplayer replayer, 
+        private readonly Timer _timer;
+
+        public PIWriter(PIReplayer replayer,
             PIServer sserver, PIPointList spoints,
             PIServer dserver, PIPointList dpoints,
             DataQueue queue)
@@ -50,12 +62,11 @@ namespace PIReplayLib
             _destServer = dserver;
             _destPoints = dpoints;
 
-            _timer = new System.Timers.Timer();
+            _timer = new Timer();
             _timer.Elapsed += WriteValues;
             _timer.Interval = Utils.FindInterval(_period);
 
             _queue = queue;
-
         }
 
         public void Start()
@@ -64,29 +75,29 @@ namespace PIReplayLib
 
             // Request via the PIReplayer to fill the DataQueue. 
             // The PIReplayer will call the PIReader to read from source server and fill the queue.
-            _requestFill = Task.Run(() => _replayer.RequestFill(initial: true));
+            _requestFill = Task.Run(() => _replayer.RequestFill(true));
 
             _sourceToDest = new Dictionary<PIPoint, PIPoint>();
 
-            Dictionary<string, PIPoint> destPointNameLookup = _destPoints
+            var destPointNameLookup = _destPoints
                 .GroupBy(p => p.Name)
                 .ToDictionary(grp => grp.Key, grp => grp.First());
- 
-            foreach (PIPoint sourcePt in _sourcePoints)
+
+            foreach (var sourcePt in _sourcePoints)
             {
                 _sourceToDest[sourcePt] = destPointNameLookup[sourcePt.Name];
             }
         }
 
         /// <summary>
-        /// This is called every 5 seconds via the timer callback.
+        ///     This is called every 5 seconds via the timer callback.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void WriteValues(object sender, ElapsedEventArgs e)
         {
             _logger.Info(string.Format("Current queue count: {0}", _queue.Count));
-            _timer.Stop();       
+            _timer.Stop();
 
             // If data queue running low, request another fill.
             if (_queue.Count < 60)
@@ -98,13 +109,13 @@ namespace PIReplayLib
                         _logger.Info("Cancelled or faulted");
                     }
                     _requestFill = Task.Run(() => _replayer.RequestFill());
-                }          
+                }
             }
 
-            AFTime syncTime = new AFTime(e.SignalTime);
+            var syncTime = new AFTime(e.SignalTime);
 
             // Remove all records at and before the timer trigger (signal) time.
-            IList<DataRecord> records = _queue.RemoveAtAndBefore(syncTime);
+            var records = _queue.RemoveAtAndBefore(syncTime);
 
             _logger.Info(string.Format("Removed {0} records", records.Count));
 
@@ -117,7 +128,7 @@ namespace PIReplayLib
             }
 
             // Flatten the DataRecord in a list of AFValue(s)
-            List<AFValue> valsList = records.SelectMany(rec => rec.Values).ToList();
+            var valsList = records.SelectMany(rec => rec.Values).ToList();
 
             // Set the PIPoint property of the AFValue to the destination server PI Point
             foreach (var v in valsList)
@@ -127,14 +138,14 @@ namespace PIReplayLib
 
             // Divide the AFValue list into 5 chunks. 
             // Wait 500 milliseconds before writing the next chunk to avoid sending too much data over the network at once.
-            int chunkSize  = valsList.Count / 5;
+            var chunkSize = valsList.Count/5;
             List<List<AFValue>> valsChunks = valsList.ChunkBy(chunkSize);
 
-            int updated = 0;
+            var updated = 0;
             foreach (var chunk in valsChunks)
             {
-                AFErrors<AFValue> errors = _destServer.UpdateValues(chunk, AFUpdateOption.InsertNoCompression, AFBufferOption.Buffer);
-                
+                var errors = _destServer.UpdateValues(chunk, AFUpdateOption.InsertNoCompression, AFBufferOption.Buffer);
+
                 if (errors != null && errors.HasErrors)
                 {
                     foreach (var kvp in errors.Errors.Take(1))
@@ -162,8 +173,8 @@ namespace PIReplayLib
         public static List<List<T>> ChunkBy<T>(this List<T> source, int chunkSize)
         {
             return source
-                .Select((x, i) => new { Index = i, Value = x })
-                .GroupBy(x => x.Index / chunkSize)
+                .Select((x, i) => new {Index = i, Value = x})
+                .GroupBy(x => x.Index/chunkSize)
                 .Select(x => x.Select(v => v.Value).ToList())
                 .ToList();
         }
