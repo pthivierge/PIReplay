@@ -9,7 +9,7 @@ namespace PIReplayLib
 {
     public class PIPointsProvider
     {
-        public IEnumerable<PIPoint> Points { get; set; }
+        public IEnumerable<PIPoint> Points { get; set; } = null;
 
 
         public PIPointsProvider(string query, PIServer server)
@@ -26,9 +26,12 @@ namespace PIReplayLib
 
         public IEnumerable<List<PIPoint>> GetPointsByChunks(int chunkSize)
         {
+
             var points=new List<PIPoint>();
+          
             foreach (var piPoint in Points)
             {
+
                 points.Add(piPoint);
                 if (points.Count >= chunkSize)
                 {

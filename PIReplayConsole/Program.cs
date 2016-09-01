@@ -15,9 +15,11 @@
 #endregion
 using System;
 using System.Collections.Generic;
+using System.Timers;
 using log4net;
 using PIReplayLib;
 using CommandLine;
+using log4net.Repository.Hierarchy;
 using OSIsoft.AF.Asset;
 using OSIsoft.AF.PI;
 using OSIsoft.AF.Time;
@@ -28,6 +30,7 @@ namespace PIReplayConsole
     {
         private static readonly ILog _logger = LogManager.GetLogger(typeof(Program));
 
+        private static Timer timer=null;
 
         private static bool ValidateRunOptions(string[] options)
         { // [server] [TagSearchQuery]
@@ -68,17 +71,26 @@ namespace PIReplayConsole
 
                     if (options.Run != null && ValidateRunOptions(options.Run))
                     {
+                        _logger.Info("Option Run starting, will run the data replay continuously as a command line application.");
+                        
+                        var replayer=new Replayer();
+                        replayer.RunFromCommandLine(options.Run[0],options.Run[1]);
 
 
-                        var replayer = new PIReplayer();
-                        replayer.Start();
-
-                        _logger.Info("Press any key to quit");
-                        Console.ReadKey();
                     }
 
                     if (options.deleteHistory != null && ValidateDeleteHistoryOptions(options.deleteHistory))
                     {
+                        _logger.Info("Delete History Option Selected, will deleted the specified data.");
+
+                        _logger.Info("This operation cannot be reversed, are you sure you want to delete the data you specified? Press Y to continue...");
+
+                        var keyInfo = Console.ReadKey();
+                        if (keyInfo.KeyChar != 'Y')
+                        {
+                            _logger.Info("Operation canceled");
+                        }
+
                         // getting the tags
                         var piConnection = new PIConnection(options.deleteHistory[0]);
 

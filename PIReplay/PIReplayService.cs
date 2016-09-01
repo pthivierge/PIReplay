@@ -14,6 +14,7 @@
 //  limitations under the License.
 #endregion
 using System;
+using System.Configuration;
 using System.ServiceProcess;
 using log4net;
 using PIReplayLib;
@@ -23,6 +24,7 @@ namespace PIReplay
     public partial class PIReplayService : ServiceBase
     {
         private readonly ILog _logger = LogManager.GetLogger(typeof (PIReplayService));
+        private Replayer _replayer = new Replayer();
 
         public PIReplayService()
         {
@@ -32,15 +34,13 @@ namespace PIReplay
         public void ConsoleStart(string[] args)
         {
             OnStart(args);
-            Console.WriteLine("Press any key to quit");
-            Console.ReadKey();
+            _replayer.RunFromCommandLine(AppSettings.Default.ServerName, AppSettings.Default.TagQueryString);
         }
 
         protected override void OnStart(string[] args)
         {
             _logger.Info("Service starting...");
-            var replayer = new PIReplayer();
-            replayer.Start();
+            _replayer.Run(AppSettings.Default.ServerName,AppSettings.Default.TagQueryString);
             _logger.Info("Service started...");
         }
 
@@ -51,6 +51,8 @@ namespace PIReplay
 
         protected override void OnStop()
         {
+            _replayer.Stop();
+            _logger.Info("Service stopped.");
         }
     }
 }
